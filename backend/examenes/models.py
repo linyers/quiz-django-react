@@ -38,6 +38,8 @@ class Examen(models.Model):
     año = models.CharField(choices=AÑO, max_length=50)
     materia = models.CharField(choices=MATERIAS, max_length=70)
     image = models.ImageField(upload_to=examen_img_path, blank=True, null=True)
+    start = models.DateTimeField()
+    end = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

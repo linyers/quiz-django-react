@@ -1,45 +1,45 @@
-from rest_framework.views import APIView
 from rest_framework import viewsets
+from rest_framework import mixins
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
+from utils.permissions import IsTeacher
 from .serializer import ExamenPreguntasSerializer, ExamenPartialSerializer, PreguntaSerializer
-from .models import Examen, Pregunta, Respuesta
+from .models import Examen, Pregunta
 
 
-class ExamenPreguntasView(APIView):
-    def get(self, request, *args, **kwargs):
-        id = request.query_params.get('id')
-        print(id)
-        examen = Examen.objects.get(id=id)
-        serializer = ExamenPreguntasSerializer(examen)
+class ExamenPreguntasView(mixins.RetrieveModelMixin,
+                        viewsets.GenericViewSet):
+    queryset = Examen.objects.all()
+    serializer_class = ExamenPreguntasSerializer
+    permission_classes = [IsAuthenticated,]
+
+
+class ExamenPartialView(mixins.ListModelMixin,
+                        mixins.CreateModelMixin,
+                        mixins.UpdateModelMixin,
+                        mixins.DestroyModelMixin,
+                        viewsets.GenericViewSet):
+    queryset = Examen.objects.all()
+    serializer_class = ExamenPartialSerializer
+
+    def get_permissions(self):
+        if self.action == "retrieve" or self.action == "list":
+            permission_classes = [
+                IsAuthenticated,
+            ]
+        else:
+            permission_classes = [IsAuthenticated, IsTeacher]
+        return [permission() for permission in permission_classes]
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        if request.user.is_student:
+            queryset = queryset.filter(año=request.user.alumno.año)
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
-
-
-class ExamenPartialView(APIView):
-    def get(self, request, *args, **kwargs):
-        examenes = Examen.objects.all()
-        serializer = ExamenPartialSerializer(examenes, many=True)
-        return Response(serializer.data)
-
-    def post(self, request, *args, **kwargs):
-        serializer = ExamenPartialSerializer(data=request.data)
-        if serializer.is_valid():
-            examen = Examen.objects.create(**serializer.data)
-            examen.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def put(self, request, *args, **kwargs):
-        examen_title = request.data['id']
-        examen = Examen.objects.get(id=examen_title)
-        serializer = ExamenPartialSerializer(examen, request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class PreguntasViewSet(viewsets.ModelViewSet):
     queryset = Pregunta.objects.all()
     serializer_class = PreguntaSerializer
+    permission_classes = [IsAuthenticated, IsTeacher,]

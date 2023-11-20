@@ -4,9 +4,9 @@ from .views import ExamenPreguntasView, ExamenPartialView, PreguntasViewSet
 
 router = DefaultRouter()
 router.register(r'preguntas', PreguntasViewSet, basename="pregunta")
+router.register(r'examen-complete', ExamenPreguntasView, basename="examen_complete")
+router.register(r'examen-partial', ExamenPartialView, basename="examen_partial")
 
 urlpatterns = [
     path("", include(router.urls)),
-    path("examen-complete/", ExamenPreguntasView.as_view(), name='examen_complete'),
-    path("examen-partial/", ExamenPartialView.as_view(), name='examen_partial'),
 ]

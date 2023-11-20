@@ -15,6 +15,11 @@ class PreguntaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pregunta
         fields = ('id', 'pregunta', 'puntaje', 'respuestas', 'examen')
+
+    def validate(self, attrs):
+        if not Examen.objects.filter(id=attrs['examen']).exists():
+            raise serializers.ValidationError({'examen': 'El examen no existe'})
+        return attrs
     
     def create(self, validated_data):
         respuestas_data = validated_data.pop('respuestas')
@@ -43,10 +48,10 @@ class ExamenPreguntasSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Examen
-        fields = ('id', 'title', 'preguntas')
+        fields = ('id', 'title', 'start', 'end', 'preguntas')
 
 
 class ExamenPartialSerializer(serializers.ModelSerializer):
     class Meta:
         model = Examen
-        fields = ('id', 'title', 'image', 'curso', 'año', 'materia', 'created_at')
+        fields = ('id', 'title', 'image', 'curso', 'año', 'materia', 'created_at', 'start', 'end')
