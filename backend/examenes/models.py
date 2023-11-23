@@ -44,6 +44,10 @@ class Examen(models.Model):
 
     def __str__(self):
         return self.title
+    
+    @property
+    def max_nota(self):
+        return self.preguntas.aggregate(models.Sum('puntaje'))['puntaje__sum']
 
 
 class Pregunta(models.Model):

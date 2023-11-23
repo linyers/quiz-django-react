@@ -51,7 +51,7 @@ class AlumnoExamen(models.Model):
     examen = models.ForeignKey(
         "examenes.Examen", related_name="alumno_examen", on_delete=models.CASCADE
     )
-    nota = models.DecimalField(max_digits=2, decimal_places=1)
+    nota = models.DecimalField(max_digits=3, decimal_places=1)
 
     def __str__(self):
         return self.alumno.nombre + " " + self.examen.title

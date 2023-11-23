@@ -49,9 +49,26 @@ class AlumnoSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Alumno
-        fields = ('id', 'user', 'nombre', 'apellido', 'dni', 'año', 'curso', 'pic')
+        fields = ('id', 'user', 'nombre', 'apellido', 'dni', 'año', 'curso', 'pic', 'examen')
 
     def validate(self, attrs):
         if not 6 < len(str(attrs['dni'])) < 9:
             raise serializers.ValidationError({'dni': 'invalid dni.'})
         return attrs
+
+
+class AlumnoExamenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlumnoExamen
+        fields = '__all__'
+
+    def validate(self, attrs):
+        examen = attrs['examen']
+        if attrs['nota'] > examen.max_nota or attrs['nota'] < 0:
+            raise serializers.ValidationError({'nota': 'invalid nota.'})
+        return attrs
+    
+    # def create(self, validated_data):
+    #     alumno = validated_data['alumno']
+    #     examen = validated_data['examen']
+    #     return super().create(validated_data)

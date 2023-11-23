@@ -48,10 +48,10 @@ class ExamenPreguntasSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Examen
-        fields = ('id', 'title', 'start', 'end', 'preguntas')
+        fields = ('id', 'title', 'max_nota', 'start', 'end', 'preguntas')
 
 
 class ExamenPartialSerializer(serializers.ModelSerializer):
     class Meta:
         model = Examen
-        fields = ('id', 'title', 'image', 'curso', 'año', 'materia', 'created_at', 'start', 'end')
+        fields = ('id', 'title', 'image', 'curso', 'año', 'materia', 'created_at', 'start', 'end', 'max_nota')
