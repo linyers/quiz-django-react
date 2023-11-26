@@ -15,11 +15,11 @@ export interface UserToken {
   pic?: string;
 }
 
-interface PrivateRoutesProps {
+export interface PrivateRoutesProps {
   children: React.ReactNode;
 }
 
-interface Alumno {
+export interface Alumno {
   user: string;
   id: number;
   nombre: string;
@@ -30,7 +30,7 @@ interface Alumno {
   pic: string;
 }
 
-interface AlumnoErrors {
+export interface AlumnoErrors {
   nombre: Array;
   apellido: Array;
   dni: Array;
@@ -40,4 +40,40 @@ interface AlumnoErrors {
   password: Array;
   repeat_password: Array;
   pic: Array;
+}
+
+export interface Respuesta {
+  id: number;
+  respuesta: string;
+  correcta: boolean;
+}
+
+export interface Pregunta {
+  id: number;
+  pregunta: string;
+  puntaje: number;
+  respuestas: Respuesta[];
+  examen: number;
+}
+
+export interface Examen {
+  id: number;
+  title: string;
+  curso: string;
+  año: string;
+  materia: string;
+  image?: string;
+  start: Date;
+  end: Date;
+  created_at: Date;
+  max_nota: number;
+}
+
+export interface ExamenPreguntas {
+  id: number;
+  title: string;
+  max_nota: number;
+  start: Date;
+  end: Date;
+  preguntas: Pregunta[];
 }
