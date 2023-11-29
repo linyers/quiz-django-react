@@ -76,4 +76,15 @@ export interface ExamenPreguntas {
   start: Date;
   end: Date;
   preguntas: Pregunta[];
+  image: string;
+  materia: string;
+  curso: string;
+  año: string;
+}
+
+export interface AlumnoExamen {
+  id: number;
+  alumno: number;
+  examen: number;
+  nota: number;
 }

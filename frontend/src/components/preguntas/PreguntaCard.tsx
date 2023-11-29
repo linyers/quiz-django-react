@@ -1,10 +1,14 @@
+import {
+  faPenToSquare,
+  faStar,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
+import { type Pregunta } from "../../types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPenToSquare, faTrash } from "@fortawesome/free-solid-svg-icons";
-import { useState } from "react";
-import { useAlumnoStore } from "../../store/alumnos";
-import { useAuthStore } from "../../store/auth";
+import { ChangeEvent, useState } from "react";
 import Modal from "../Modal";
-import { Link } from "react-router-dom";
+import { usePreguntaStore } from "../../store/preguntas";
+import { useAuthStore } from "../../store/auth";
 
 const AlertDelete = ({
   setShowDeleteAlert,
@@ -14,12 +18,12 @@ const AlertDelete = ({
   id: number;
 }) => {
   const tokens = useAuthStore((state) => state.tokens);
-  const removeAlumno = useAlumnoStore((state) => state.removeAlumno);
+  const removePregunta = usePreguntaStore((state) => state.removePregunta);
 
   const handleDelete = (id: number) => {
     const accessToken = tokens?.access;
     if (!accessToken) return;
-    removeAlumno(accessToken, id);
+    removePregunta(accessToken, id);
     setShowDeleteAlert(false);
   };
 
@@ -58,11 +62,11 @@ const AlertDelete = ({
                     className="text-base font-semibold leading-6 text-gray-900"
                     id="modal-title"
                   >
-                    Eliminar alumno
+                    Eliminar pregunta
                   </h3>
                   <div className="mt-2">
                     <p className="text-sm text-gray-500">
-                      Estas seguro que deseas eliminar este alumno?
+                      Estas seguro que deseas eliminar este pregunta?
                     </p>
                   </div>
                 </div>
@@ -91,149 +95,139 @@ const AlertDelete = ({
   );
 };
 
-const UpdateAlumnoForm = ({ setShowModal }: { setShowModal: Function }) => {
-  const alumnoUpdate = useAlumnoStore((state) => state.alumnoUpdate);
+const UpdatePreguntaForm = ({ setShowModal }: { setShowModal: Function }) => {
+  const preguntaUpdate = usePreguntaStore((state) => state.preguntaUpdate);
 
   const tokens = useAuthStore((state) => state.tokens);
 
-  const updateAlumno = useAlumnoStore((state) => state.updateAlumno);
-  const errors = useAlumnoStore((state) => state.errors);
-  const cleanErrors = useAlumnoStore((state) => state.cleanErrors);
+  const updatePregunta = usePreguntaStore((state) => state.updatePregunta);
+  const errors = usePreguntaStore((state) => state.errors);
+  const cleanErrors = usePreguntaStore((state) => state.cleanErrors);
+  const examenId = usePreguntaStore((state) => state.examenId);
 
-  const [pic, setPic] = useState<File | null>(null);
+  const [respuestas, setRespuestas] = useState(preguntaUpdate?.respuestas);
+
+  const addRespuesta = () => {
+    setRespuestas([...respuestas, { respuesta: "", correcta: false }]);
+  };
+
+  const handleChange = (idx: number, e: ChangeEvent<HTMLInputElement>) => {
+    let newRespuestas: any = [...respuestas];
+    newRespuestas[idx][e.target.name] =
+      e.target.type === "checkbox" ? e.target.checked : e.target.value;
+    setRespuestas(newRespuestas);
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData);
+    const data = {
+      pregunta: e.currentTarget.pregunta.value,
+      puntaje: parseInt(e.currentTarget.puntaje.value),
+      respuestas,
+      examen: examenId,
+    };
 
     const accessToken = tokens?.access;
 
-    if (!accessToken || !alumnoUpdate) {
+    if (!accessToken || !preguntaUpdate) {
       return;
     }
 
-    const created = await updateAlumno(
-      accessToken,
-      { ...data, pic },
-      alumnoUpdate.id
-    );
+    const created = await updatePregunta(accessToken, data, preguntaUpdate.id);
 
     if (!created) return;
 
     setShowModal(false);
   };
 
-  const isImage = (file: File) => {
-    return file && file["type"].split("/")[0] === "image";
-  };
-
   return (
     <form onSubmit={handleSubmit} className="flex flex-col w-full">
-      <label
-        htmlFor="input-profile-pic"
-        className="cursor-pointer mb-2 w-fit self-center"
-      >
-        <img
-          className={`object-cover w-20 h-20 rounded-full ${
-            errors?.pic && "border-2 border-red-500 rounded-full"
-          }`}
-          src={
-            pic && isImage(pic)
-              ? URL.createObjectURL(pic)
-              : alumnoUpdate?.pic
-              ? alumnoUpdate.pic
-              : "user-pic.png"
-          }
-          alt=""
-        />
-        <input
-          type="file"
-          name="pic"
-          onChange={(e) => setPic(e.target.files ? e.target.files[0] : null)}
-          id="input-profile-pic"
-          className="hidden"
-        />
-      </label>
       <div className="flex gap-5">
         <div className="flex flex-col">
-          <label className="mb-2 font-bold text-lg text-gray-900">Nombre</label>
-          <input
-            className={`border py-2 px-3 text-grey-800 ${
-              errors?.nombre && "border-red-500"
-            }`}
-            type="text"
-            name="nombre"
-            placeholder="Nombre"
-            defaultValue={alumnoUpdate?.nombre}
-          />
-        </div>
-        <div className="flex flex-col">
-          <label className="mb-2 font-bold text-lg text-gray-900 self-end">
-            Apellido
+          <label className="mb-2 font-bold text-lg text-gray-900">
+            Pregunta
           </label>
           <input
             className={`border py-2 px-3 text-grey-800 ${
-              errors?.apellido && "border-red-500"
+              errors?.pregunta && "border-red-500"
             }`}
             type="text"
-            name="apellido"
-            placeholder="Apellido"
-            defaultValue={alumnoUpdate?.apellido}
+            name="pregunta"
+            placeholder="Pregunta"
+            defaultValue={preguntaUpdate?.pregunta}
           />
         </div>
-      </div>
-
-      <div className="flex gap-5">
         <div className="flex flex-col">
-          <label className="mt-4 mb-2 font-bold text-lg text-gray-900">
-            DNI
+          <label className="mb-2 font-bold text-lg text-gray-900">
+            Puntaje
           </label>
           <input
             className={`border py-2 px-3 text-grey-800 ${
-              errors?.dni && "border-red-500"
+              errors?.puntaje && "border-red-500"
             }`}
             type="number"
-            name="dni"
-            placeholder="DNI"
-            defaultValue={alumnoUpdate?.dni}
+            name="puntaje"
+            placeholder="Puntaje"
+            defaultValue={preguntaUpdate?.puntaje}
           />
         </div>
-        <div className="flex flex-col">
-          <label className="mt-4 mb-2 font-bold text-lg text-gray-900">
-            Año
-          </label>
-          <select
-            className={`border py-2 px-3 text-grey-800 ${
-              errors?.año && "border-red-500"
-            }`}
-            name="año"
-            defaultValue={alumnoUpdate?.año}
-          >
-            <option value="1°">1°</option>
-            <option value="2°">2°</option>
-            <option value="3°">3°</option>
-            <option value="4°">4°</option>
-            <option value="5°">5°</option>
-          </select>
-        </div>
-        <div className="flex flex-col">
-          <label className="mt-4 mb-2 font-bold text-lg text-gray-900">
-            Curso
-          </label>
-          <select
-            className={`border py-2 px-3 text-grey-800 ${
-              errors?.curso && "border-red-500"
-            }`}
-            name="curso"
-            defaultValue={alumnoUpdate?.curso}
-          >
-            <option value="A">A</option>
-            <option value="B">B</option>
-            <option value="C">C</option>
-          </select>
-        </div>
       </div>
+      {respuestas?.map((respuesta, idx) => {
+        return (
+          <div key={idx} className="flex mt-5 gap-5">
+            <div className="flex flex-col">
+              <div className="flex justify-end w-fit">
+                {respuestas.length !== 1 && (
+                  <FontAwesomeIcon
+                    className="text-red-600 text-2xl hover:text-red-500 cursor-pointer"
+                    icon={faTrash}
+                    onClick={() => {
+                      const newRespuestas = [...respuestas];
+                      newRespuestas.splice(idx, 1);
+                      setRespuestas(newRespuestas);
+                    }}
+                  />
+                )}
+                <label className="font-bold mb-2 text-lg text-gray-900">
+                  Respuesta
+                </label>
+              </div>
+              <input
+                className={`border py-2 px-3 text-grey-800 ${
+                  errors?.respuesta && "border-red-500"
+                }`}
+                type="text"
+                name="respuesta"
+                placeholder="Respuesta"
+                defaultValue={respuesta.respuesta}
+                onChange={(e) => handleChange(idx, e)}
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="font-bold text-lg mb-2 text-gray-900">
+                Correcta?
+              </label>
+              <input
+                className={`border py-2 px-3 text-grey-800 ${
+                  errors?.correcta && "border-red-500"
+                }`}
+                type="checkbox"
+                name="correcta"
+                placeholder="Respuesta"
+                defaultChecked={respuesta.correcta}
+                onChange={(e) => handleChange(idx, e)}
+              />
+            </div>
+          </div>
+        );
+      })}
+      <button
+        className="mt-5 bg-emerald-500 text-white active:bg-emerald-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mb-1 ease-linear transition-all duration-150"
+        type="button"
+        onClick={addRespuesta}
+      >
+        Agregar Campo
+      </button>
       {/*footer*/}
       <div className="flex gap-2 items-center mt-6 justify-end rounded-b">
         <button
@@ -257,47 +251,24 @@ const UpdateAlumnoForm = ({ setShowModal }: { setShowModal: Function }) => {
   );
 };
 
-function AlumnosCard({ alumno }: any) {
+function PreguntaCard({ pregunta }: { pregunta: Pregunta }) {
+  const setPreguntaUpdate = usePreguntaStore(
+    (state) => state.setPreguntaUpdate
+  );
   const [showIcons, setShowIcons] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [showModalUpdate, setShowModalUpdate] = useState(false);
 
-  const setAlumnoUpdate = useAlumnoStore((state) => state.setAlumnoUpdate);
-
   return (
-    <>
-      <li
-        className="flex justify-between p-4 bg-gray-50 shadow-sm hover:shadow-md duration-200 text-xl items-center"
-        onMouseEnter={() => setShowIcons(true)}
-        onMouseLeave={() => setShowIcons(false)}
-      >
-        <Link to={`/alumnos/${alumno.id}`}>
-          <section className="flex gap-2 items-center">
-            <img
-              className="w-16 h-16 object-cover rounded-full"
-              src={alumno.pic ? alumno.pic : "user-pic.png"}
-              alt=""
-            />
-            <span className="capitalize">
-              {alumno.nombre} {alumno.apellido}
-            </span>
-          </section>
-        </Link>
-
-        <Link to={`/alumnos/${alumno.id}`}>
-          <section className="flex items-center gap-5">
-            <span>{alumno.dni}</span>
-            <span>
-              {alumno.año} {alumno.curso}
-            </span>
-          </section>
-        </Link>
-        {showIcons && (
-          <span className="absolute right-9 mb-20 text-4xl slide-in">
+    <li>
+      <div className="flex flex-col">
+        <div className="flex items-center gap-5">
+          <span className="font-bold">{pregunta.pregunta}</span>
+          <span className="text-3xl slide-in">
             <FontAwesomeIcon
               onClick={() => {
                 setShowModalUpdate(true);
-                setAlumnoUpdate(alumno);
+                setPreguntaUpdate(pregunta);
               }}
               className="cursor-pointer hover:text-green-600 duration-200"
               icon={faPenToSquare}
@@ -308,20 +279,35 @@ function AlumnosCard({ alumno }: any) {
               icon={faTrash}
             />
           </span>
-        )}
-      </li>
+        </div>
+        <span className="text-base mb-2">Puntaje: {pregunta.puntaje}</span>
+        <div className="flex flex-col">
+          {pregunta.respuestas.map((respuesta) => {
+            return (
+              <span
+                className={`${
+                  respuesta.correcta ? "text-green-600" : "text-gray-500"
+                }`}
+                key={respuesta.id}
+              >
+                <FontAwesomeIcon icon={faStar} /> {respuesta.respuesta}
+              </span>
+            );
+          })}
+        </div>
+      </div>
       {showDeleteAlert && (
-        <AlertDelete setShowDeleteAlert={setShowDeleteAlert} id={alumno.id} />
+        <AlertDelete setShowDeleteAlert={setShowDeleteAlert} id={pregunta.id} />
       )}
       {showModalUpdate && (
         <Modal
-          title={"Modificar alumno"}
+          title={"Modificar pregunta"}
           setShowModal={setShowModalUpdate}
-          Content={UpdateAlumnoForm}
+          Content={UpdatePreguntaForm}
         />
       )}
-    </>
+    </li>
   );
 }
 
-export default AlumnosCard;
+export default PreguntaCard;

@@ -20,14 +20,6 @@ export const getExamenes = (accessToken: string, query: object) => {
   });
 };
 
-export const getExamen = (accessToken: string, id: number) => {
-  return examenesAPI.get(`/examen-partial/${id}/`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-};
-
 export const postExamen = (accessToken: string, body: object) => {
   return examenesAPI.post("/examen-partial/", body, {
     headers: {

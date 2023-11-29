@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { type Examen, type ExamenPreguntas } from "../types";
 import {
-  getExamen,
   getExamenPreguntas,
   getExamenes,
   postExamen,
@@ -14,13 +13,11 @@ import axios, { AxiosError } from "axios";
 interface State {
   examenes: Examen[];
   examenPreguntas?: ExamenPreguntas;
-  oneExamen?: Examen;
   examenUpdate?: Examen;
   query: object;
   errors?: object;
 
   requestExamenes: (accessToken: string) => void;
-  requestExamen: (accessToken: string, id: number) => void;
   requestExamenPreguntas: (accessToken: string, id: number) => void;
   createExamen: (accessToken: string, body: object) => Promise<boolean>;
   updateExamen: (
@@ -38,7 +35,6 @@ export const useExamenStore = create<State>((set, get) => {
   return {
     examenes: [],
     examenPreguntas: undefined,
-    oneExamen: undefined,
     examenUpdate: undefined,
     query: {},
     errors: undefined,
@@ -48,12 +44,6 @@ export const useExamenStore = create<State>((set, get) => {
       const res = await getExamenes(accessToken, query);
       const data = res.data;
       set({ examenes: data });
-    },
-
-    requestExamen: async (accessToken: string, id: number) => {
-      const res = await getExamen(accessToken, id);
-      const data = res.data;
-      set({ oneExamen: data });
     },
 
     requestExamenPreguntas: async (accessToken: string, id: number) => {

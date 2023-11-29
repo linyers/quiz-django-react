@@ -1,18 +1,18 @@
 import { useEffect, useState } from "react";
-import { useAlumnoStore } from "../../store/alumnos";
 import { useAuthStore } from "../../store/auth";
-import AlumnosCard from "./AlumnosCard";
-import AlumnosFilter from "./AlumnosFilter";
+import { useExamenStore } from "../../store/examenes";
 import Modal from "../Modal";
+import ExamenesCard from "./ExamenesCard";
+import ExamenesFilter from "./ExamenesFilter";
 
 const CreateForm = ({ setShowModal }: { setShowModal: Function }) => {
   const tokens = useAuthStore((state) => state.tokens);
 
-  const createAlumno = useAlumnoStore((state) => state.createAlumno);
-  const errors = useAlumnoStore((state) => state.errors);
-  const cleanErrors = useAlumnoStore((state) => state.cleanErrors);
+  const createExamen = useExamenStore((state) => state.createExamen);
+  const errors = useExamenStore((state) => state.errors);
+  const cleanErrors = useExamenStore((state) => state.cleanErrors);
 
-  const [pic, setPic] = useState<File | null>(null);
+  const [image, setImage] = useState<File | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -25,7 +25,7 @@ const CreateForm = ({ setShowModal }: { setShowModal: Function }) => {
       return;
     }
 
-    const created = await createAlumno(accessToken, { ...data, pic });
+    const created = await createExamen(accessToken, { ...data, image });
 
     if (!created) return;
 
@@ -39,47 +39,64 @@ const CreateForm = ({ setShowModal }: { setShowModal: Function }) => {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col w-full">
       <label
-        htmlFor="input-profile-pic"
-        className="cursor-pointer mb-2 w-fit self-center"
+        htmlFor="input-image"
+        className="cursor-pointer mb-2 w-full h-32 self-center"
       >
         <img
-          className={`object-cover w-20 h-20 rounded-full ${
-            errors?.pic && "border-2 border-red-500 rounded-full"
+          className={`object-cover w-full h-full rounded-md ${
+            errors?.image && "border-2 border-red-500 rounded-full"
           }`}
-          src={pic && isImage(pic) ? URL.createObjectURL(pic) : "user-pic.png"}
+          src={
+            image && isImage(image)
+              ? URL.createObjectURL(image)
+              : "user-pic.png"
+          }
           alt=""
         />
         <input
           type="file"
-          name="pic"
-          onChange={(e) => setPic(e.target.files ? e.target.files[0] : null)}
-          id="input-profile-pic"
+          name="image"
+          onChange={(e) => setImage(e.target.files ? e.target.files[0] : null)}
+          id="input-image"
           className="hidden"
         />
       </label>
+
+      <div className="flex flex-col">
+        <label className="mb-2 font-bold text-lg text-gray-900">Titulo</label>
+        <input
+          className={`border py-2 px-3 text-grey-800 ${
+            errors?.title && "border-red-500"
+          }`}
+          type="text"
+          name="title"
+          placeholder="Titulo"
+        />
+      </div>
+
       <div className="flex gap-5">
         <div className="flex flex-col">
-          <label className="mb-2 font-bold text-lg text-gray-900">Nombre</label>
-          <input
-            className={`border py-2 px-3 text-grey-800 ${
-              errors?.nombre && "border-red-500"
-            }`}
-            type="text"
-            name="nombre"
-            placeholder="Nombre"
-          />
-        </div>
-        <div className="flex flex-col">
-          <label className="mb-2 font-bold text-lg text-gray-900 self-end">
-            Apellido
+          <label className="mt-4 mb-2 font-bold text-lg text-gray-900">
+            Fecha de inicio
           </label>
           <input
             className={`border py-2 px-3 text-grey-800 ${
-              errors?.apellido && "border-red-500"
+              errors?.start && "border-red-500"
             }`}
-            type="text"
-            name="apellido"
-            placeholder="Apellido"
+            type="datetime-local"
+            name="start"
+          />
+        </div>
+        <div className="flex flex-col">
+          <label className="mt-4 mb-2 font-bold text-lg text-gray-900">
+            Fecha de fin
+          </label>
+          <input
+            className={`border py-2 px-3 text-grey-800 ${
+              errors?.end && "border-red-500"
+            }`}
+            type="datetime-local"
+            name="end"
           />
         </div>
       </div>
@@ -87,16 +104,17 @@ const CreateForm = ({ setShowModal }: { setShowModal: Function }) => {
       <div className="flex gap-5">
         <div className="flex flex-col">
           <label className="mt-4 mb-2 font-bold text-lg text-gray-900">
-            DNI
+            Materia
           </label>
-          <input
+          <select
             className={`border py-2 px-3 text-grey-800 ${
-              errors?.dni && "border-red-500"
+              errors?.materia && "border-red-500"
             }`}
-            type="number"
-            name="dni"
-            placeholder="DNI"
-          />
+            name="materia"
+          >
+            <option value="historia">Historia</option>
+            <option value="etica">Etica</option>
+          </select>
         </div>
         <div className="flex flex-col">
           <label className="mt-4 mb-2 font-bold text-lg text-gray-900">
@@ -131,43 +149,6 @@ const CreateForm = ({ setShowModal }: { setShowModal: Function }) => {
           </select>
         </div>
       </div>
-      <label className="mt-4 mb-2 font-bold text-lg text-gray-900">Email</label>
-      <input
-        className={`border py-2 px-3 text-grey-800 ${
-          errors?.email && "border-red-500"
-        }`}
-        type="email"
-        name="email"
-        placeholder="Email"
-      />
-      <div className="flex gap-5">
-        <div className="flex flex-col">
-          <label className="mt-4 mb-2 font-bold text-lg text-gray-900">
-            Contraseña
-          </label>
-          <input
-            className={`border py-2 px-3 text-grey-800 ${
-              errors?.password && "border-red-500"
-            }`}
-            type="password"
-            name="password"
-            placeholder="Contraseña"
-          />
-        </div>
-        <div className="flex flex-col">
-          <label className="mt-4 mb-2 font-bold text-lg text-gray-900">
-            Confirmar contraseña
-          </label>
-          <input
-            className={`border py-2 px-3 text-grey-800 ${
-              errors?.repeat_password && "border-red-500"
-            }`}
-            type="password"
-            name="repeat_password"
-            placeholder="Confirmar contraseña"
-          />
-        </div>
-      </div>
       {/*footer*/}
       <div className="flex gap-2 items-center mt-6 justify-end rounded-b">
         <button
@@ -191,22 +172,22 @@ const CreateForm = ({ setShowModal }: { setShowModal: Function }) => {
   );
 };
 
-function AlumnosList() {
-  const requestAlumnos = useAlumnoStore((state) => state.requestAlumnos);
-  const alumnos = useAlumnoStore((state) => state.alumnos);
+function ExamenesList() {
+  const requestExamenes = useExamenStore((state) => state.requestExamenes);
+  const examenes = useExamenStore((state) => state.examenes);
   const tokens = useAuthStore((state) => state.tokens);
 
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    const fetchAlumnos = async () => {
+    const fetchExamenes = async () => {
       const accessToken = tokens?.access;
       if (accessToken) {
-        requestAlumnos(accessToken);
+        requestExamenes(accessToken);
       }
     };
-    fetchAlumnos();
-  }, [alumnos.length]);
+    fetchExamenes();
+  }, [examenes.length]);
 
   return (
     <>
@@ -216,32 +197,32 @@ function AlumnosList() {
           type="button"
           onClick={() => setShowModal(true)}
         >
-          Agregar Alumno
+          Agregar Examen
         </button>
         {showModal && (
           <Modal
-            title={"Agregar alumno"}
+            title={"Agregar examen"}
             setShowModal={setShowModal}
             Content={CreateForm}
           />
         )}
-        {alumnos.length > 0 && <AlumnosFilter />}
+        {examenes.length > 0 && <ExamenesFilter />}
       </div>
-      {alumnos.length > 0 ? (
+      {examenes.length > 0 ? (
         <>
-          <ul className="mx-6 flex flex-col gap-5">
-            {alumnos.map((alumno, idx) => {
-              return <AlumnosCard alumno={alumno} key={idx} />;
+          <ul className="mx-6 flex flex-wrap gap-5">
+            {examenes.map((examen, idx) => {
+              return <ExamenesCard examen={examen} key={idx} />;
             })}
           </ul>
         </>
       ) : (
         <span className="mx-6 p-6 bg-gray-100 flex flex-col gap-5 items-center justify-center font-bold text-2xl shadow-md">
-          No hay alumnos. Agrega con el boton de arriba!
+          No hay examenes. Agrega con el boton de arriba!
         </span>
       )}
     </>
   );
 }
 
-export default AlumnosList;
+export default ExamenesList;

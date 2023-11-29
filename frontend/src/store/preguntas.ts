@@ -13,8 +13,8 @@ interface State {
   preguntas: Pregunta[];
   onePregunta?: Pregunta;
   preguntaUpdate?: Pregunta;
-  query: object;
   errors?: object;
+  examenId?: number;
 
   requestPreguntas: (accessToken: string) => void;
   requestPregunta: (accessToken: string, id: number) => void;
@@ -26,8 +26,8 @@ interface State {
   ) => Promise<boolean>;
   removePregunta: (accessToken: string, id: number) => Promise<boolean>;
   setPreguntaUpdate: (pregunta: Pregunta) => void;
-  cleanQuery: () => void;
   cleanErrors: () => void;
+  setExamenId: (id: number) => void;
 }
 
 export const usePreguntaStore = create<State>((set, get) => {
@@ -35,11 +35,10 @@ export const usePreguntaStore = create<State>((set, get) => {
     preguntas: [],
     onePregunta: undefined,
     preguntaUpdate: undefined,
-    query: {},
     errors: undefined,
+    examenId: undefined,
 
     requestPreguntas: async (accessToken: string) => {
-      const { query } = get();
       const res = await getPreguntas(accessToken);
       const data = res.data;
       set({ preguntas: data });
@@ -52,13 +51,14 @@ export const usePreguntaStore = create<State>((set, get) => {
     },
 
     createPregunta: async (accessToken: string, body: object) => {
+      const { requestPreguntas } = get();
       try {
         const res = await postPregunta(accessToken, body);
-        const data = res.data;
-        set({ preguntas: data });
+        requestPreguntas(accessToken);
         return true;
       } catch (err: Error | AxiosError | any) {
         if (axios.isAxiosError(err)) {
+          console.log(err.response?.data);
           const data = err.response?.data;
           set({ errors: data });
         }
@@ -67,10 +67,11 @@ export const usePreguntaStore = create<State>((set, get) => {
     },
 
     updatePregunta: async (accessToken: string, body: object, id: number) => {
+      const { requestPreguntas } = get();
       try {
         const res = await putPregunta(accessToken, body, id);
         const data = res.data;
-        set({ preguntas: data });
+        requestPreguntas(accessToken);
         return true;
       } catch (err: Error | AxiosError | any) {
         if (axios.isAxiosError(err)) {
@@ -99,8 +100,9 @@ export const usePreguntaStore = create<State>((set, get) => {
     cleanErrors: () => {
       set({ errors: undefined });
     },
-    cleanQuery: () => {
-      set({ query: {} });
+
+    setExamenId: (id: number) => {
+      set({ examenId: id });
     },
   };
 });

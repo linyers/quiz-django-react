@@ -57,6 +57,14 @@ function App() {
               </TeacherRoutes>
             }
           />
+          <Route
+            path="/examenes/:id"
+            element={
+              <TeacherRoutes>
+                <ExamenesPage />
+              </TeacherRoutes>
+            }
+          />
         </Routes>
       </Router>
     </>

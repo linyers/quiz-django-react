@@ -1,10 +1,12 @@
+import { useState } from "react";
+import { type Examen } from "../../types";
+import { useExamenStore } from "../../store/examenes";
+import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPenToSquare, faTrash } from "@fortawesome/free-solid-svg-icons";
-import { useState } from "react";
-import { useAlumnoStore } from "../../store/alumnos";
-import { useAuthStore } from "../../store/auth";
 import Modal from "../Modal";
-import { Link } from "react-router-dom";
+import { useAuthStore } from "../../store/auth";
+import DateExamen from "./DateExamen";
 
 const AlertDelete = ({
   setShowDeleteAlert,
@@ -14,12 +16,12 @@ const AlertDelete = ({
   id: number;
 }) => {
   const tokens = useAuthStore((state) => state.tokens);
-  const removeAlumno = useAlumnoStore((state) => state.removeAlumno);
+  const removeExamen = useExamenStore((state) => state.removeExamen);
 
   const handleDelete = (id: number) => {
     const accessToken = tokens?.access;
     if (!accessToken) return;
-    removeAlumno(accessToken, id);
+    removeExamen(accessToken, id);
     setShowDeleteAlert(false);
   };
 
@@ -58,11 +60,11 @@ const AlertDelete = ({
                     className="text-base font-semibold leading-6 text-gray-900"
                     id="modal-title"
                   >
-                    Eliminar alumno
+                    Eliminar examen
                   </h3>
                   <div className="mt-2">
                     <p className="text-sm text-gray-500">
-                      Estas seguro que deseas eliminar este alumno?
+                      Estas seguro que deseas eliminar este examen?
                     </p>
                   </div>
                 </div>
@@ -91,14 +93,14 @@ const AlertDelete = ({
   );
 };
 
-const UpdateAlumnoForm = ({ setShowModal }: { setShowModal: Function }) => {
-  const alumnoUpdate = useAlumnoStore((state) => state.alumnoUpdate);
+const UpdateExamenForm = ({ setShowModal }: { setShowModal: Function }) => {
+  const examenUpdate = useExamenStore((state) => state.examenUpdate);
 
   const tokens = useAuthStore((state) => state.tokens);
 
-  const updateAlumno = useAlumnoStore((state) => state.updateAlumno);
-  const errors = useAlumnoStore((state) => state.errors);
-  const cleanErrors = useAlumnoStore((state) => state.cleanErrors);
+  const updateExamen = useExamenStore((state) => state.updateExamen);
+  const errors = useExamenStore((state) => state.errors);
+  const cleanErrors = useExamenStore((state) => state.cleanErrors);
 
   const [pic, setPic] = useState<File | null>(null);
 
@@ -109,14 +111,14 @@ const UpdateAlumnoForm = ({ setShowModal }: { setShowModal: Function }) => {
 
     const accessToken = tokens?.access;
 
-    if (!accessToken || !alumnoUpdate) {
+    if (!accessToken || !examenUpdate) {
       return;
     }
 
-    const created = await updateAlumno(
+    const created = await updateExamen(
       accessToken,
       { ...data, pic },
-      alumnoUpdate.id
+      examenUpdate.id
     );
 
     if (!created) return;
@@ -132,17 +134,17 @@ const UpdateAlumnoForm = ({ setShowModal }: { setShowModal: Function }) => {
     <form onSubmit={handleSubmit} className="flex flex-col w-full">
       <label
         htmlFor="input-profile-pic"
-        className="cursor-pointer mb-2 w-fit self-center"
+        className="cursor-pointer mb-2 w-full h-32 self-center"
       >
         <img
-          className={`object-cover w-20 h-20 rounded-full ${
-            errors?.pic && "border-2 border-red-500 rounded-full"
+          className={`object-cover w-full h-full rounded-md ${
+            errors?.image && "border-2 border-red-500 rounded-full"
           }`}
           src={
             pic && isImage(pic)
               ? URL.createObjectURL(pic)
-              : alumnoUpdate?.pic
-              ? alumnoUpdate.pic
+              : examenUpdate?.image
+              ? examenUpdate.image
               : "user-pic.png"
           }
           alt=""
@@ -155,31 +157,43 @@ const UpdateAlumnoForm = ({ setShowModal }: { setShowModal: Function }) => {
           className="hidden"
         />
       </label>
+
+      <label className="mb-2 font-bold text-lg text-gray-900">Titulo</label>
+      <input
+        className={`border py-2 px-3 text-grey-800 ${
+          errors?.title && "border-red-500"
+        }`}
+        type="text"
+        name="title"
+        placeholder="Titulo"
+        defaultValue={examenUpdate?.title}
+      />
+
       <div className="flex gap-5">
         <div className="flex flex-col">
-          <label className="mb-2 font-bold text-lg text-gray-900">Nombre</label>
-          <input
-            className={`border py-2 px-3 text-grey-800 ${
-              errors?.nombre && "border-red-500"
-            }`}
-            type="text"
-            name="nombre"
-            placeholder="Nombre"
-            defaultValue={alumnoUpdate?.nombre}
-          />
-        </div>
-        <div className="flex flex-col">
-          <label className="mb-2 font-bold text-lg text-gray-900 self-end">
-            Apellido
+          <label className="mt-4 mb-2 font-bold text-lg text-gray-900">
+            Fecha de inicio
           </label>
           <input
             className={`border py-2 px-3 text-grey-800 ${
-              errors?.apellido && "border-red-500"
+              errors?.start && "border-red-500"
             }`}
-            type="text"
-            name="apellido"
-            placeholder="Apellido"
-            defaultValue={alumnoUpdate?.apellido}
+            type="datetime-local"
+            defaultValue={examenUpdate?.start}
+            name="start"
+          />
+        </div>
+        <div className="flex flex-col">
+          <label className="mt-4 mb-2 font-bold text-lg text-gray-900">
+            Fecha de fin
+          </label>
+          <input
+            className={`border py-2 px-3 text-grey-800 ${
+              errors?.end && "border-red-500"
+            }`}
+            type="datetime-local"
+            defaultValue={examenUpdate?.end}
+            name="end"
           />
         </div>
       </div>
@@ -187,17 +201,18 @@ const UpdateAlumnoForm = ({ setShowModal }: { setShowModal: Function }) => {
       <div className="flex gap-5">
         <div className="flex flex-col">
           <label className="mt-4 mb-2 font-bold text-lg text-gray-900">
-            DNI
+            Materia
           </label>
-          <input
+          <select
             className={`border py-2 px-3 text-grey-800 ${
-              errors?.dni && "border-red-500"
+              errors?.materia && "border-red-500"
             }`}
-            type="number"
-            name="dni"
-            placeholder="DNI"
-            defaultValue={alumnoUpdate?.dni}
-          />
+            name="materia"
+            defaultValue={examenUpdate?.materia}
+          >
+            <option value="historia">Historia</option>
+            <option value="etica">Etica</option>
+          </select>
         </div>
         <div className="flex flex-col">
           <label className="mt-4 mb-2 font-bold text-lg text-gray-900">
@@ -208,7 +223,7 @@ const UpdateAlumnoForm = ({ setShowModal }: { setShowModal: Function }) => {
               errors?.año && "border-red-500"
             }`}
             name="año"
-            defaultValue={alumnoUpdate?.año}
+            defaultValue={examenUpdate?.año}
           >
             <option value="1°">1°</option>
             <option value="2°">2°</option>
@@ -226,7 +241,7 @@ const UpdateAlumnoForm = ({ setShowModal }: { setShowModal: Function }) => {
               errors?.curso && "border-red-500"
             }`}
             name="curso"
-            defaultValue={alumnoUpdate?.curso}
+            defaultValue={examenUpdate?.curso}
           >
             <option value="A">A</option>
             <option value="B">B</option>
@@ -257,47 +272,50 @@ const UpdateAlumnoForm = ({ setShowModal }: { setShowModal: Function }) => {
   );
 };
 
-function AlumnosCard({ alumno }: any) {
+function ExamenesCard({ examen }: { examen: Examen }) {
   const [showIcons, setShowIcons] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [showModalUpdate, setShowModalUpdate] = useState(false);
 
-  const setAlumnoUpdate = useAlumnoStore((state) => state.setAlumnoUpdate);
+  const setExamenUpdate = useExamenStore((state) => state.setExamenUpdate);
 
   return (
     <>
       <li
-        className="flex justify-between p-4 bg-gray-50 shadow-sm hover:shadow-md duration-200 text-xl items-center"
+        className="flex flex-col w-72 md:w-80 justify-between pb-4 bg-gray-50 shadow-sm hover:shadow-md duration-200 text-xl items-center rounded-md"
         onMouseEnter={() => setShowIcons(true)}
         onMouseLeave={() => setShowIcons(false)}
       >
-        <Link to={`/alumnos/${alumno.id}`}>
-          <section className="flex gap-2 items-center">
+        <Link to={`/examenes/${examen.id}`}>
+          <section className="flex gap-2 items-center w-full h-36">
             <img
-              className="w-16 h-16 object-cover rounded-full"
-              src={alumno.pic ? alumno.pic : "user-pic.png"}
+              className="object-cover h-full w-screen rounded-t-md"
+              src={examen.image ? examen.image : "user-pic.png"}
               alt=""
             />
-            <span className="capitalize">
-              {alumno.nombre} {alumno.apellido}
-            </span>
           </section>
         </Link>
-
-        <Link to={`/alumnos/${alumno.id}`}>
-          <section className="flex items-center gap-5">
-            <span>{alumno.dni}</span>
+        <Link
+          to={`/examenes/${examen.id}`}
+          className="capitalize mt-6 mb-4 font-bold text-2xl text-center"
+        >
+          {examen.title}
+        </Link>
+        <Link to={`/examenes/${examen.id}`}>
+          <section className="flex items-center gap-3">
+            <span className="capitalize">{examen.materia}</span>
             <span>
-              {alumno.año} {alumno.curso}
+              {examen.año} {examen.curso}
             </span>
           </section>
         </Link>
+        <DateExamen start={examen.start} end={examen.end} />
         {showIcons && (
-          <span className="absolute right-9 mb-20 text-4xl slide-in">
+          <span className="absolute text-white text-4xl slide-in">
             <FontAwesomeIcon
               onClick={() => {
                 setShowModalUpdate(true);
-                setAlumnoUpdate(alumno);
+                setExamenUpdate(examen);
               }}
               className="cursor-pointer hover:text-green-600 duration-200"
               icon={faPenToSquare}
@@ -311,17 +329,16 @@ function AlumnosCard({ alumno }: any) {
         )}
       </li>
       {showDeleteAlert && (
-        <AlertDelete setShowDeleteAlert={setShowDeleteAlert} id={alumno.id} />
+        <AlertDelete setShowDeleteAlert={setShowDeleteAlert} id={examen.id} />
       )}
       {showModalUpdate && (
         <Modal
-          title={"Modificar alumno"}
+          title={"Modificar examen"}
           setShowModal={setShowModalUpdate}
-          Content={UpdateAlumnoForm}
+          Content={UpdateExamenForm}
         />
       )}
     </>
   );
 }
-
-export default AlumnosCard;
+export default ExamenesCard;
