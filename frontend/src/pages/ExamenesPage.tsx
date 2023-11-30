@@ -3,11 +3,9 @@ import Examen from "../components/examenes/Examen";
 import ExamenesList from "../components/examenes/ExamenesList";
 
 function ExamenesPage() {
-  let { id } = useParams();
+  let { slug } = useParams();
   return (
-    <main className="">
-      {id ? <Examen id={parseInt(id)} /> : <ExamenesList />}
-    </main>
+    <main className="">{slug ? <Examen slug={slug} /> : <ExamenesList />}</main>
   );
 }
 

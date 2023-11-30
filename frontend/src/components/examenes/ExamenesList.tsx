@@ -176,6 +176,7 @@ function ExamenesList() {
   const requestExamenes = useExamenStore((state) => state.requestExamenes);
   const examenes = useExamenStore((state) => state.examenes);
   const tokens = useAuthStore((state) => state.tokens);
+  const userToken = useAuthStore((state) => state.userToken);
 
   const [showModal, setShowModal] = useState(false);
 
@@ -188,6 +189,29 @@ function ExamenesList() {
     };
     fetchExamenes();
   }, [examenes.length]);
+
+  if (userToken?.is_student) {
+    return (
+      <>
+        <div className="flex items-center justify-between mx-6 my-5">
+          <h1 className="text-2xl font-bold">Mis Examenes</h1>
+        </div>
+        {examenes.length > 0 ? (
+          <>
+            <ul className="mx-6 flex flex-wrap gap-5">
+              {examenes.map((examen, idx) => {
+                return <ExamenesCard examen={examen} key={idx} />;
+              })}
+            </ul>
+          </>
+        ) : (
+          <span className="mx-6 p-6 bg-gray-100 flex flex-col gap-5 items-center justify-center font-bold text-2xl shadow-md">
+            No hay examenes. Vuelve otro dia!
+          </span>
+        )}
+      </>
+    );
+  }
 
   return (
     <>

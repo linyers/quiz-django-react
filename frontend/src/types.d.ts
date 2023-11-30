@@ -67,6 +67,7 @@ export interface Examen {
   end: Date;
   created_at: Date;
   max_nota: number;
+  slug: string;
 }
 
 export interface ExamenPreguntas {
@@ -80,6 +81,7 @@ export interface ExamenPreguntas {
   materia: string;
   curso: string;
   año: string;
+  slug: string;
 }
 
 export interface AlumnoExamen {
@@ -87,4 +89,21 @@ export interface AlumnoExamen {
   alumno: number;
   examen: number;
   nota: number;
+}
+
+export interface ProtectedRespuestas {
+  id: number;
+  respuesta: string;
+}
+
+export interface Question {
+  id: number;
+  pregunta: string;
+  puntaje: number;
+  respuestas: ProtectedRespuestas[];
+}
+
+export interface QuestionAnswers {
+  pregunta_id: number;
+  respuesta_id: number[];
 }

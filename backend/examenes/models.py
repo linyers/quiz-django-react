@@ -1,5 +1,8 @@
 from django.db import models
 from django.conf import settings
+from django.db.models.signals import pre_save
+from django.utils.text import slugify
+import uuid
 import os
 
 
@@ -40,6 +43,7 @@ class Examen(models.Model):
     image = models.ImageField(upload_to=examen_img_path, blank=True, null=True)
     start = models.DateTimeField()
     end = models.DateTimeField()
+    slug = models.SlugField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -63,3 +67,17 @@ class Respuesta(models.Model):
     pregunta = models.ForeignKey(Pregunta, on_delete=models.CASCADE, related_name="respuestas")
     respuesta = models.TextField()
     correcta = models.BooleanField(default=False)
+
+
+def set_slug(sender, instance, *args, **kwargs):
+    try:
+        if instance.slug.split('-', 1)[1] == slugify(instance.title.replace(' ', '-')):
+            return
+    except IndexError:
+        pass
+    id = str(uuid.uuid4())
+    title = str(instance.title).replace(' ', '-')
+    instance.slug = slugify(f'{id[:8]}-{title}')
+
+
+pre_save.connect(set_slug, sender=Examen)

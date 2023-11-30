@@ -18,14 +18,14 @@ interface State {
   errors?: object;
 
   requestExamenes: (accessToken: string) => void;
-  requestExamenPreguntas: (accessToken: string, id: number) => void;
+  requestExamenPreguntas: (accessToken: string, slug: string) => void;
   createExamen: (accessToken: string, body: object) => Promise<boolean>;
   updateExamen: (
     accessToken: string,
     body: object,
-    id: number
+    slug: string
   ) => Promise<boolean>;
-  removeExamen: (accessToken: string, id: number) => Promise<boolean>;
+  removeExamen: (accessToken: string, slug: string) => Promise<boolean>;
   setExamenUpdate: (examen: Examen) => void;
   cleanErrors: () => void;
   cleanQuery: () => void;
@@ -46,8 +46,8 @@ export const useExamenStore = create<State>((set, get) => {
       set({ examenes: data });
     },
 
-    requestExamenPreguntas: async (accessToken: string, id: number) => {
-      const res = await getExamenPreguntas(accessToken, id);
+    requestExamenPreguntas: async (accessToken: string, slug: string) => {
+      const res = await getExamenPreguntas(accessToken, slug);
       const data = res.data;
       set({ examenPreguntas: data });
     },
@@ -67,9 +67,9 @@ export const useExamenStore = create<State>((set, get) => {
       }
     },
 
-    updateExamen: async (accessToken: string, body: object, id: number) => {
+    updateExamen: async (accessToken: string, body: object, slug: string) => {
       try {
-        const res = await putExamen(accessToken, body, id);
+        const res = await putExamen(accessToken, body, slug);
         const data = res.data;
         set({ examenes: data });
         return true;
@@ -82,10 +82,10 @@ export const useExamenStore = create<State>((set, get) => {
       }
     },
 
-    removeExamen: async (accessToken: string, id: number) => {
+    removeExamen: async (accessToken: string, slug: string) => {
       const { requestExamenes } = get();
       try {
-        await deleteExamen(accessToken, id);
+        await deleteExamen(accessToken, slug);
         requestExamenes(accessToken);
         return true;
       } catch (err) {

@@ -10,18 +10,18 @@ import DateExamen from "./DateExamen";
 
 const AlertDelete = ({
   setShowDeleteAlert,
-  id,
+  slug,
 }: {
   setShowDeleteAlert: Function;
-  id: number;
+  slug: string;
 }) => {
   const tokens = useAuthStore((state) => state.tokens);
   const removeExamen = useExamenStore((state) => state.removeExamen);
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (slug: string) => {
     const accessToken = tokens?.access;
     if (!accessToken) return;
-    removeExamen(accessToken, id);
+    removeExamen(accessToken, slug);
     setShowDeleteAlert(false);
   };
 
@@ -72,7 +72,7 @@ const AlertDelete = ({
             </div>
             <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
               <button
-                onClick={() => handleDelete(id)}
+                onClick={() => handleDelete(slug)}
                 type="button"
                 className="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto"
               >
@@ -118,7 +118,7 @@ const UpdateExamenForm = ({ setShowModal }: { setShowModal: Function }) => {
     const created = await updateExamen(
       accessToken,
       { ...data, pic },
-      examenUpdate.id
+      examenUpdate.slug
     );
 
     if (!created) return;
@@ -276,8 +276,40 @@ function ExamenesCard({ examen }: { examen: Examen }) {
   const [showIcons, setShowIcons] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [showModalUpdate, setShowModalUpdate] = useState(false);
+  const userToken = useAuthStore((state) => state.userToken);
 
   const setExamenUpdate = useExamenStore((state) => state.setExamenUpdate);
+
+  if (userToken?.is_student) {
+    return (
+      <>
+        <li className="flex flex-col w-72 md:w-80 justify-between pb-4 bg-gray-50 shadow-sm hover:shadow-md duration-200 text-xl items-center rounded-md">
+          <Link to={`/examenes/${examen.slug}`}>
+            <section className="flex gap-2 items-center w-full h-36">
+              <img
+                className="object-cover h-full w-screen rounded-t-md"
+                src={examen.image ? examen.image : "user-pic.png"}
+                alt=""
+              />
+            </section>
+          </Link>
+          <Link
+            to={`/examenes/${examen.slug}`}
+            className="capitalize mt-6 mb-4 font-bold text-2xl text-center"
+          >
+            {examen.title}
+          </Link>
+          <section className="flex items-center gap-3">
+            <span className="capitalize">{examen.materia}</span>
+            <span>
+              {examen.año} {examen.curso}
+            </span>
+          </section>
+          <DateExamen start={examen.start} end={examen.end} />
+        </li>
+      </>
+    );
+  }
 
   return (
     <>
@@ -286,7 +318,7 @@ function ExamenesCard({ examen }: { examen: Examen }) {
         onMouseEnter={() => setShowIcons(true)}
         onMouseLeave={() => setShowIcons(false)}
       >
-        <Link to={`/examenes/${examen.id}`}>
+        <Link to={`/examenes/${examen.slug}`}>
           <section className="flex gap-2 items-center w-full h-36">
             <img
               className="object-cover h-full w-screen rounded-t-md"
@@ -296,19 +328,17 @@ function ExamenesCard({ examen }: { examen: Examen }) {
           </section>
         </Link>
         <Link
-          to={`/examenes/${examen.id}`}
+          to={`/examenes/${examen.slug}`}
           className="capitalize mt-6 mb-4 font-bold text-2xl text-center"
         >
           {examen.title}
         </Link>
-        <Link to={`/examenes/${examen.id}`}>
-          <section className="flex items-center gap-3">
-            <span className="capitalize">{examen.materia}</span>
-            <span>
-              {examen.año} {examen.curso}
-            </span>
-          </section>
-        </Link>
+        <section className="flex items-center gap-3">
+          <span className="capitalize">{examen.materia}</span>
+          <span>
+            {examen.año} {examen.curso}
+          </span>
+        </section>
         <DateExamen start={examen.start} end={examen.end} />
         {showIcons && (
           <span className="absolute text-white text-4xl slide-in">
@@ -329,7 +359,10 @@ function ExamenesCard({ examen }: { examen: Examen }) {
         )}
       </li>
       {showDeleteAlert && (
-        <AlertDelete setShowDeleteAlert={setShowDeleteAlert} id={examen.id} />
+        <AlertDelete
+          setShowDeleteAlert={setShowDeleteAlert}
+          slug={examen.slug}
+        />
       )}
       {showModalUpdate && (
         <Modal

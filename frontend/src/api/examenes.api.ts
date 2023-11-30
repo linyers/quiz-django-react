@@ -4,8 +4,8 @@ const examenesAPI = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });
 
-export const getExamenPreguntas = (accessToken: string, id: number) => {
-  return examenesAPI.get(`examen-complete/${id}`, {
+export const getExamenPreguntas = (accessToken: string, slug: string) => {
+  return examenesAPI.get(`examen-complete/${slug}`, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
@@ -29,8 +29,8 @@ export const postExamen = (accessToken: string, body: object) => {
   });
 };
 
-export const putExamen = (accessToken: string, body: object, id: number) => {
-  return examenesAPI.put(`/examen-partial/${id}/`, body, {
+export const putExamen = (accessToken: string, body: object, slug: string) => {
+  return examenesAPI.put(`/examen-partial/${slug}/`, body, {
     headers: {
       "Content-Type": "multipart/form-data",
       Authorization: `Bearer ${accessToken}`,
@@ -38,8 +38,8 @@ export const putExamen = (accessToken: string, body: object, id: number) => {
   });
 };
 
-export const deleteExamen = (accessToken: string, id: number) => {
-  return examenesAPI.delete(`/examen-partial/${id}/`, {
+export const deleteExamen = (accessToken: string, slug: string) => {
+  return examenesAPI.delete(`/examen-partial/${slug}/`, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },

@@ -52,17 +52,17 @@ function App() {
           <Route
             path="/examenes"
             element={
-              <TeacherRoutes>
+              <PrivateRoutes>
                 <ExamenesPage />
-              </TeacherRoutes>
+              </PrivateRoutes>
             }
           />
           <Route
-            path="/examenes/:id"
+            path="/examenes/:slug"
             element={
-              <TeacherRoutes>
+              <PrivateRoutes>
                 <ExamenesPage />
-              </TeacherRoutes>
+              </PrivateRoutes>
             }
           />
         </Routes>

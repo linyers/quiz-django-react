@@ -39,7 +39,8 @@ export const usePreguntaStore = create<State>((set, get) => {
     examenId: undefined,
 
     requestPreguntas: async (accessToken: string) => {
-      const res = await getPreguntas(accessToken);
+      const { examenId } = get();
+      const res = await getPreguntas(accessToken, examenId);
       const data = res.data;
       set({ preguntas: data });
     },
@@ -53,7 +54,7 @@ export const usePreguntaStore = create<State>((set, get) => {
     createPregunta: async (accessToken: string, body: object) => {
       const { requestPreguntas } = get();
       try {
-        const res = await postPregunta(accessToken, body);
+        await postPregunta(accessToken, body);
         requestPreguntas(accessToken);
         return true;
       } catch (err: Error | AxiosError | any) {
@@ -69,8 +70,7 @@ export const usePreguntaStore = create<State>((set, get) => {
     updatePregunta: async (accessToken: string, body: object, id: number) => {
       const { requestPreguntas } = get();
       try {
-        const res = await putPregunta(accessToken, body, id);
-        const data = res.data;
+        await putPregunta(accessToken, body, id);
         requestPreguntas(accessToken);
         return true;
       } catch (err: Error | AxiosError | any) {

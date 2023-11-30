@@ -162,6 +162,7 @@ function PreguntasList() {
   const requestPreguntas = usePreguntaStore((state) => state.requestPreguntas);
   const preguntas = usePreguntaStore((state) => state.preguntas);
   const tokens = useAuthStore((state) => state.tokens);
+  const examenId = usePreguntaStore((state) => state.examenId);
 
   useEffect(() => {
     const fetchPreguntas = async () => {
@@ -171,7 +172,7 @@ function PreguntasList() {
       }
     };
     fetchPreguntas();
-  }, [preguntas.length]);
+  }, [examenId]);
 
   return (
     <div className="md:max-w-4xl mt-5 md:mx-auto mx-6 bg-white shadow-lg rounded-lg overflow-hidden">
