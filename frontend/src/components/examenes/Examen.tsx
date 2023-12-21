@@ -10,16 +10,46 @@ import AlumnoExamen from "../AlumnoExamen";
 import ExamenQuiz from "./ExamenQuiz";
 import { useQuizStore } from "../../store/quiz";
 
+const FinishedQuiz = ({examen}: {examen: number}) => {
+  const tokens = useAuthStore((state) => state.tokens);
+  const fetchFinishedQuiz = useQuizStore((state) => state.fetchFinishedQuiz);
+  const finishedQuizAlumno = useQuizStore((state) => state.finishedQuizAlumno);
+
+  useEffect(() => {
+    const fetchQuiz = () => {
+      const accessToken = tokens?.access
+      if (!accessToken) return
+      fetchFinishedQuiz(accessToken, examen);
+    }
+    fetchQuiz()
+  }, [])
+  console.log(finishedQuizAlumno)
+  return <div className="md:max-w-4xl my-5 md:mx-auto mx-6 bg-white shadow-lg rounded-lg overflow-hidden">
+                <div className="p-4 flex flex-col gap-5">
+      hola
+                </div>
+              </div>
+
+}
+
 const StartButton = ({
   start,
   end,
   examenId,
+  isDone,
 }: {
   start: Date;
   end: Date;
   examenId: number;
+  isDone: boolean;
 }) => {
   const today = new Date();
+
+  if (isDone) {
+    return (
+      <button className="bg-gray-400 text-white cursor-default font-bold uppercase text-sm shadow hover:shadow-lg outline-none focus:outline-none ease-linear transition-all duration-150 w-full p-3">Examen completado</button>
+    )
+  }
   if (today < new Date(start) || today > new Date(end)) {
     return (
       <button className="bg-gray-400 text-white cursor-default font-bold uppercase text-sm shadow hover:shadow-lg outline-none focus:outline-none ease-linear transition-all duration-150 w-full p-3">
@@ -130,8 +160,10 @@ function Examen({ slug }: { slug: string }) {
               start={examenPreguntas.start}
               end={examenPreguntas.end}
               examenId={examenPreguntas.id}
+              isDone={examenPreguntas.is_done}
             />
           </div>
+          {examenPreguntas.is_done && <FinishedQuiz examen={examenPreguntas.id} />}
           {!userToken?.is_student && (
             <>
               <PreguntasList />

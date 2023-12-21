@@ -68,6 +68,7 @@ export interface Examen {
   created_at: Date;
   max_nota: number;
   slug: string;
+  is_done: boolean;
 }
 
 export interface ExamenPreguntas {
@@ -82,6 +83,7 @@ export interface ExamenPreguntas {
   curso: string;
   año: string;
   slug: string;
+  is_done: boolean;
 }
 
 export interface AlumnoExamen {
@@ -104,6 +106,21 @@ export interface Question {
 }
 
 export interface QuestionAnswers {
-  pregunta_id: number;
-  respuesta_id: number[];
+  pregunta: number;
+  respuestas: number[];
+}
+
+export interface AlumnoQuiz {
+  id: number;
+  alumno: number;
+  pregunta: string;
+  puntaje: number;
+  correct_answer: boolean;
+  respuestas: ProtectedRespuestas[];
+  alumno_answers: number[];
+}
+
+export interface FinishQuiz {
+  nota: number;
+  quiz: AlumnoQuiz[];
 }

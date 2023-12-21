@@ -305,7 +305,12 @@ function ExamenesCard({ examen }: { examen: Examen }) {
               {examen.año} {examen.curso}
             </span>
           </section>
-          <DateExamen start={examen.start} end={examen.end} />
+          {
+            examen.is_done ?
+              <span className="mt-2 text-lg flex items-center text-green-600 font-bold">Examen completado</span> 
+              : 
+              <DateExamen start={examen.start} end={examen.end} />
+          }
         </li>
       </>
     );

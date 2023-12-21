@@ -5,7 +5,7 @@ from .models import Pregunta, Respuesta, Examen
 class RespuestaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Respuesta
-        fields = ('id', 'respuesta', 'correcta')
+        fields = ("id", "respuesta", "correcta")
 
 
 class PreguntaSerializer(serializers.ModelSerializer):
@@ -14,12 +14,12 @@ class PreguntaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Pregunta
-        fields = ('id', 'pregunta', 'puntaje', 'respuestas', 'examen')
+        fields = ("id", "pregunta", "puntaje", "respuestas", "examen")
 
     def validate(self, attrs):
-        if not Examen.objects.filter(id=attrs['examen']).exists():
-            raise serializers.ValidationError({'examen': 'El examen no existe'})
-        
+        if not Examen.objects.filter(id=attrs["examen"]).exists():
+            raise serializers.ValidationError({"examen": "El examen no existe"})
+
         # correctas = 0
         # for respuesta in attrs['respuestas']:
         #     if correctas == 1 and respuesta['correcta']:
@@ -27,33 +27,38 @@ class PreguntaSerializer(serializers.ModelSerializer):
         #     if respuesta['correcta']:
         #         correctas += 1
         return attrs
-    
+
     def create(self, validated_data):
-        respuestas_data = validated_data.pop('respuestas')
-        examen_data = validated_data.pop('examen')
+        respuestas_data = validated_data.pop("respuestas")
+        examen_data = validated_data.pop("examen")
         examen = Examen.objects.get(id=examen_data)
         pregunta = Pregunta.objects.create(examen=examen, **validated_data)
 
-        respuestas = [Respuesta(pregunta=pregunta, **respuesta) for respuesta in respuestas_data]
+        respuestas = [
+            Respuesta(pregunta=pregunta, **respuesta) for respuesta in respuestas_data
+        ]
         Respuesta.objects.bulk_create(respuestas)
-        
+
         return pregunta
 
     def update(self, instance, validated_data):
-        validated_data.pop('examen')
+        validated_data.pop("examen")
         Respuesta.objects.filter(pregunta=instance).delete()
-        respuestas_data = validated_data.pop('respuestas')
-        respuestas = [Respuesta(pregunta=instance, **respuesta) for respuesta in respuestas_data]
+        respuestas_data = validated_data.pop("respuestas")
+        respuestas = [
+            Respuesta(pregunta=instance, **respuesta) for respuesta in respuestas_data
+        ]
         Respuesta.objects.bulk_create(respuestas)
-        
+
         instance = super().update(instance, validated_data)
         return instance
+
 
 # This serializers is for send it a alumnos user, dont show the correct answer
 class RespuestaProtectedSerializer(serializers.ModelSerializer):
     class Meta:
         model = Respuesta
-        fields = ('id', 'respuesta')
+        fields = ("id", "respuesta")
 
 
 # This serializers is for send it a alumnos user, dont show the correct answer
@@ -63,25 +68,61 @@ class PreguntaProtectedSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Pregunta
-        fields = ('id', 'pregunta', 'puntaje', 'respuestas', 'examen')
+        fields = ("id", "pregunta", "puntaje", "respuestas", "examen")
 
 
 class ExamenPreguntasSerializer(serializers.ModelSerializer):
     preguntas = PreguntaSerializer(many=True, read_only=True)
+    is_done = serializers.SerializerMethodField()
 
     class Meta:
         model = Examen
-        fields = ('id', 'title', 'max_nota', 'start', 'end', 'preguntas', 'image', 'año', 'curso', 'materia', 'slug')
-        extra_kwargs = {
-            'slug': {'read_only': True},
-            'max_nota': {'read_only': True}
-        }
+        fields = (
+            "id",
+            "title",
+            "max_nota",
+            "start",
+            "end",
+            "preguntas",
+            "image",
+            "año",
+            "curso",
+            "materia",
+            "slug",
+            "is_done",
+        )
+        extra_kwargs = {"slug": {"read_only": True}, "max_nota": {"read_only": True}}
+
+    def get_is_done(self, obj):
+        request = self.context.get("request")
+        if not request.user.is_student:
+            return False
+        return obj.alumno_examen.filter(alumno=request.user.alumno).exists()
+
 
 class ExamenPartialSerializer(serializers.ModelSerializer):
+    is_done = serializers.SerializerMethodField()
+
     class Meta:
         model = Examen
-        fields = ('id', 'title', 'image', 'curso', 'año', 'materia', 'created_at', 'start', 'end', 'max_nota', 'slug')
-        extra_kwargs = {
-            'slug': {'read_only': True},
-            'max_nota': {'read_only': True}
-        }
+        fields = (
+            "id",
+            "title",
+            "image",
+            "curso",
+            "año",
+            "materia",
+            "created_at",
+            "start",
+            "end",
+            "max_nota",
+            "slug",
+            "is_done",
+        )
+        extra_kwargs = {"slug": {"read_only": True}, "max_nota": {"read_only": True}}
+
+    def get_is_done(self, obj):
+        request = self.context.get("request")
+        if not request.user.is_student:
+            return False
+        return obj.alumno_examen.filter(alumno=request.user.alumno).exists()

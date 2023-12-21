@@ -5,45 +5,29 @@ import { type Question } from "../../types";
 
 const Question = ({ question }: { question: Question }) => {
   const questionAnswers = useQuizStore((state) => state.questionAnswers);
-  const setQuestionAnswers = useQuizStore((state) => state.setQuestionAnswers);
+  const setNewQuestionAnswers = useQuizStore(
+    (state) => state.setNewQuestionAnswers
+  );
+  const removeQuestionAnswers = useQuizStore(
+    (state) => state.removeQuestionAnswers
+  );
 
   const handleAnswer = (id: number) => () => {
     // The question not in the array
-    if (!questionAnswers.find((q) => q.pregunta_id === question.id)) {
-      setQuestionAnswers([
-        ...questionAnswers,
-        { pregunta_id: question.id, respuesta_id: [id] },
-      ]);
+    if (!questionAnswers.find((q) => q.pregunta === question.id)) {
+      setNewQuestionAnswers(question.id, id);
       return;
     }
 
     // The question in array, but the answer dont
-    if (!questionAnswers.find((q) => q.respuesta_id.includes(id))) {
-      console.log("no esta seleccionado pero esta la pregunta en el array");
+    if (!questionAnswers.find((q) => q.respuestas.includes(id))) {
+      setNewQuestionAnswers(question.id, id);
       return;
     }
 
     // The question in array and asnwer too
-    const newAnswers = [...questionAnswers]
-      .find((q) => q.pregunta_id === question.id)
-      ?.respuesta_id.filter((r) => r !== id);
-
-    if (!newAnswers) return;
-
-    const newQuestionAnswers = [...questionAnswers].filter(
-      (q) => q.pregunta_id !== question.id
-    );
-
-    setQuestionAnswers([
-      ...newQuestionAnswers,
-      {
-        product_id: question.id,
-        respuesta_id: newAnswers,
-      },
-    ]);
+    removeQuestionAnswers(question.id, id);
   };
-
-  console.log(questionAnswers);
 
   return (
     <>
@@ -71,6 +55,8 @@ function ExamenQuiz() {
   const goNextQuestion = useQuizStore((state) => state.goNextQuestion);
   const goPrevQuestion = useQuizStore((state) => state.goPrevQuestion);
 
+  const finishQuiz = useQuizStore((state) => state.finishQuiz);
+
   useEffect(() => {
     const fetchQuiz = async () => {
       const accessToken = tokens?.access;
@@ -84,12 +70,23 @@ function ExamenQuiz() {
 
   const questionInfo = questions[currentQuestion];
 
+  if (questions.length === 0) {
+    return;
+  }
+
+  const handleFinishQuiz = () => () => {
+    const accessToken = tokens?.access;
+    if (!accessToken) return;
+    finishQuiz(accessToken);
+  };
+
   return (
     <div className="">
       <button onClick={() => goPrevQuestion()}>anterior</button>
       <span>Pregunta: {currentQuestion + 1}</span>
       <button onClick={() => goNextQuestion()}>siguiente</button>
       <Question question={questionInfo} />
+      <button onClick={handleFinishQuiz()}>Terminar</button>
     </div>
   );
 }

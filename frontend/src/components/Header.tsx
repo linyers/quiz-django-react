@@ -18,7 +18,7 @@ function Header() {
       <nav className="flex gap-5">
         {userToken?.is_student ? (
           <>
-            <img src={userToken.pic ? userToken.pic : "user-pic.png"} alt="" />
+            <img className="w-16" src={userToken.pic ? userToken.pic : "user-pic.png"} alt="" />
             <Link className="hover:text-gray-800" to={"/dashboard"}>
               {userToken.nombre} {userToken.apellido}
             </Link>

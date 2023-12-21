@@ -1,64 +1,84 @@
-from rest_framework import viewsets, mixins
+from rest_framework import viewsets, mixins, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from examenes.models import Pregunta
-from .models import Quiz
+from alumnos.models import AlumnoExamen
+from .models import Quiz, QuizAnswers
 from .serializers import QuizSerializer
 
+
 # Create your views here.
-class QuizViewSet(mixins.CreateModelMixin,
-                mixins.ListModelMixin,
-                viewsets.GenericViewSet):
+class QuizViewSet(
+    mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet
+):
     queryset = []
     serializer_class = QuizSerializer
-    permission_classes = [IsAuthenticated,]
-
-    def get_queryset(self):
-        params = self.request.query_params
-
-        if not params:
-            return super().get_queryset()
-
-        QUERY_DICT = {
-            'alumno': 'alumno__id',
-        }
-
-        data = {
-            QUERY_DICT[k]: params.get(k) for k in QUERY_DICT.keys() if params.get(k)
-        }
-        
-        return Quiz.objects.filter(**data)
+    permission_classes = [
+        IsAuthenticated,
+    ]
 
     def list(self, request, *args, **kwargs):
-        if request.user.is_student:
-            queryset = Quiz.objects.filter(alumno=request.user.alumno)
+        examen = request.query_params.get("examen", None)
+        if request.user.is_student and examen:
+            queryset = Quiz.objects.by_examen_and_alumno(
+                alumno=request.user.alumno, examen=examen
+            )
             serializer = QuizSerializer(queryset, many=True)
-            return Response(serializer.data)
-        return super().list(request, *args, **kwargs)
-    
+            nota = AlumnoExamen.objects.filter(
+                alumno=request.user.alumno, examen__id=examen
+            ).values_list("nota", flat=True)[0]
+            return Response({"nota": nota, "quiz": serializer.data})
+        return Response([])
+
     # The user send many preguntas in a list, this check what is a correct
     def create(self, request, *args, **kwargs):
-        if request.user.is_student:
-            request.data['alumno'] = request.user.alumno.id
-        
-        respuestas = request.data.get('respuestas', [])
-        pregunta = request.data.get('pregunta')
-        request.data.pop('correct_answer', None)
+        if not request.user.is_student:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        if not pregunta:
-            return super().create(request, *args, **kwargs)
-        
-        if not Pregunta.objects.filter(id=pregunta).exists():
-            return super().create(request, *args, **kwargs)
-        
-        pregunta_obj = Pregunta.objects.get(id=pregunta)
-        respuestas_obj_list = pregunta_obj.respuestas.filter(id__in=respuestas, correcta=True)
+        quiz = []
+        answers = []
+        nota = 0
 
-        if len(respuestas_obj_list) != len(respuestas):
-            request.data['correct_answer'] = False
-            return super().create(request, *args, **kwargs)
-        
-        request.data['correct_answer'] = True
-        
-        return super().create(request, *args, **kwargs)
+        for item in request.data:
+            respuestas = item.get("respuestas", [])
+            pregunta = item.get("pregunta")
+            item.pop("correct_answer", None)
+
+            if not pregunta:
+                return Response({"created": False}, status=status.HTTP_400_BAD_REQUEST)
+
+            if not Pregunta.objects.filter(id=pregunta).exists():
+                return Response({"created": False}, status=status.HTTP_400_BAD_REQUEST)
+
+            pregunta_obj = Pregunta.objects.get(id=pregunta)
+            respuestas_obj_list = pregunta_obj.respuestas.filter(
+                id__in=respuestas, correcta=True
+            )
+
+            if len(respuestas_obj_list) != len(respuestas) or len(respuestas) == 0:
+                item["correct_answer"] = False
+            else:
+                item["correct_answer"] = True
+                nota += pregunta_obj.puntaje
+
+            quiz.append(
+                Quiz(
+                    alumno=request.user.alumno,
+                    pregunta=pregunta_obj,
+                    correct_answer=item["correct_answer"],
+                )
+            )
+
+            for r in item["respuestas"]:
+                respuesta_obj = pregunta_obj.respuestas.get(id=r)
+                answers.append(QuizAnswers(pregunta=pregunta_obj, answer=respuesta_obj))
+
+        Quiz.objects.bulk_create(quiz)
+        QuizAnswers.objects.bulk_create(answers)
+
+        AlumnoExamen.objects.create(
+            alumno=request.user.alumno, examen=pregunta_obj.examen, nota=nota
+        )
+
+        return Response({"created": True})
