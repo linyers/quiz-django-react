@@ -2,6 +2,7 @@ from rest_framework import viewsets, mixins, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from examenes.serializer import PreguntaSerializer
 from examenes.models import Pregunta
 from alumnos.models import AlumnoExamen
 from .models import Quiz, QuizAnswers
@@ -28,7 +29,11 @@ class QuizViewSet(
             nota = AlumnoExamen.objects.filter(
                 alumno=request.user.alumno, examen__id=examen
             ).values_list("nota", flat=True)[0]
-            return Response({"nota": nota, "quiz": serializer.data})
+            preguntas = Pregunta.objects.filter(examen__id=examen)
+            preguntas = PreguntaSerializer(preguntas, many=True)
+            return Response(
+                {"nota": nota, "quiz": serializer.data, "preguntas": preguntas.data}
+            )
         return Response([])
 
     # The user send many preguntas in a list, this check what is a correct
@@ -56,7 +61,10 @@ class QuizViewSet(
                 id__in=respuestas, correcta=True
             )
 
-            if len(respuestas_obj_list) != len(respuestas) or len(respuestas) == 0:
+            if len(respuestas) == 0:
+                continue
+
+            if len(respuestas_obj_list) != len(respuestas):
                 item["correct_answer"] = False
             else:
                 item["correct_answer"] = True

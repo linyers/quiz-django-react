@@ -3,34 +3,141 @@ import { useExamenStore } from "../../store/examenes";
 import { useAuthStore } from "../../store/auth";
 import moment from "moment";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faClockRotateLeft } from "@fortawesome/free-solid-svg-icons";
+import {
+  faClockRotateLeft,
+  faQuestion,
+} from "@fortawesome/free-solid-svg-icons";
+import { faCheck } from "@fortawesome/free-solid-svg-icons";
+import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import PreguntasList from "../preguntas/PreguntasList";
 import { usePreguntaStore } from "../../store/preguntas";
 import AlumnoExamen from "../AlumnoExamen";
 import ExamenQuiz from "./ExamenQuiz";
 import { useQuizStore } from "../../store/quiz";
+import { type Pregunta, type AlumnoQuiz } from "../../types";
 
-const FinishedQuiz = ({examen}: {examen: number}) => {
+const FinishedQuizAnswers = ({
+  pregunta,
+  alumnoQuiz,
+}: {
+  pregunta: Pregunta;
+  alumnoQuiz?: AlumnoQuiz;
+}) => {
+  const respuestasCorrectas = pregunta.respuestas.filter((r) => r.correcta);
+  const alumnoAnswers = alumnoQuiz?.alumno_answers;
+
+  let isCorrect = false;
+
+  if (alumnoAnswers) {
+    isCorrect = respuestasCorrectas.every((respuesta) =>
+      alumnoAnswers.includes(respuesta.id)
+    );
+  }
+
+  return (
+    <>
+      <div className="flex justify-between items-center">
+        <span className="font-bold">{pregunta.pregunta}</span>
+        <span>
+          {isCorrect ? (
+            <FontAwesomeIcon
+              className="text-3xl text-green-500"
+              icon={faCheck}
+            />
+          ) : !alumnoAnswers ? (
+            <FontAwesomeIcon
+              className="text-3xl text-gray-500"
+              icon={faQuestion}
+            />
+          ) : (
+            <FontAwesomeIcon className="text-3xl text-red-500" icon={faXmark} />
+          )}
+        </span>
+      </div>
+      <span className="text-base mb-2">pts: {pregunta.puntaje}</span>
+      <ul className="border rounded-md">
+        {pregunta.respuestas.map((respuesta, idx) => {
+          const isCorrect = respuestasCorrectas.includes(respuesta);
+          const isAlumnoAnswer = alumnoAnswers?.includes(respuesta.id);
+
+          let bgColor = "transparent";
+          if (isCorrect && isAlumnoAnswer) bgColor = "bg-green-500";
+          if (!isCorrect && isAlumnoAnswer) bgColor = "bg-red-500";
+          if (isCorrect && !isAlumnoAnswer) bgColor = "bg-gray-200";
+          return (
+            <li className={`${bgColor} p-1 ${idx === 0 && "rounded-t-md"}`}>
+              {respuesta.respuesta}
+            </li>
+          );
+        })}
+      </ul>
+    </>
+  );
+};
+
+const FinishedQuiz = ({ examen }: { examen: number }) => {
   const tokens = useAuthStore((state) => state.tokens);
   const fetchFinishedQuiz = useQuizStore((state) => state.fetchFinishedQuiz);
   const finishedQuizAlumno = useQuizStore((state) => state.finishedQuizAlumno);
 
   useEffect(() => {
     const fetchQuiz = () => {
-      const accessToken = tokens?.access
-      if (!accessToken) return
+      const accessToken = tokens?.access;
+      if (!accessToken) return;
       fetchFinishedQuiz(accessToken, examen);
-    }
-    fetchQuiz()
-  }, [])
-  console.log(finishedQuizAlumno)
-  return <div className="md:max-w-4xl my-5 md:mx-auto mx-6 bg-white shadow-lg rounded-lg overflow-hidden">
-                <div className="p-4 flex flex-col gap-5">
-      hola
-                </div>
-              </div>
+    };
+    fetchQuiz();
+  }, [examen]);
 
-}
+  return (
+    <div className="md:max-w-4xl my-5 md:mx-auto mx-6 bg-white shadow-lg rounded-lg overflow-hidden">
+      <div className="p-4 flex flex-col gap-2">
+        <span className="text-lg mb-5 font-bold text-gray-600">
+          Nota final:{" "}
+          <span className="font-normal">{finishedQuizAlumno?.nota}</span>
+        </span>
+        <div className="flex gap-5 justify-center">
+          <span className="flex items-center">
+            <FontAwesomeIcon
+              className="text-3xl text-green-500"
+              icon={faCheck}
+            />{" "}
+            Correcta
+          </span>
+          <span className="flex items-center">
+            <FontAwesomeIcon className="text-3xl text-red-500" icon={faXmark} />{" "}
+            Incorrecta
+          </span>
+          <span className="flex items-center">
+            <FontAwesomeIcon
+              className="text-3xl text-gray-500"
+              icon={faQuestion}
+            />{" "}
+            Sin responder
+          </span>
+        </div>
+        <div className="flex flex-col text-lg gap-5">
+          <ul className="flex flex-col gap-5">
+            {finishedQuizAlumno?.preguntas.map((pregunta, idx) => {
+              const alumnoQuiz = finishedQuizAlumno?.quiz.find(
+                (q) => q.pregunta === pregunta.id
+              );
+              return (
+                <li className="flex flex-col">
+                  <FinishedQuizAnswers
+                    pregunta={pregunta}
+                    alumnoQuiz={alumnoQuiz}
+                    key={idx}
+                  />
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const StartButton = ({
   start,
@@ -47,8 +154,10 @@ const StartButton = ({
 
   if (isDone) {
     return (
-      <button className="bg-gray-400 text-white cursor-default font-bold uppercase text-sm shadow hover:shadow-lg outline-none focus:outline-none ease-linear transition-all duration-150 w-full p-3">Examen completado</button>
-    )
+      <button className="bg-gray-400 text-white cursor-default font-bold uppercase text-sm shadow hover:shadow-lg outline-none focus:outline-none ease-linear transition-all duration-150 w-full p-3">
+        Examen completado
+      </button>
+    );
   }
   if (today < new Date(start) || today > new Date(end)) {
     return (
@@ -99,7 +208,7 @@ function Examen({ slug }: { slug: string }) {
     new Date(examenPreguntas?.end) - new Date(examenPreguntas?.start);
 
   if (quizStart === examenPreguntas?.id) {
-    return <ExamenQuiz />;
+    return <ExamenQuiz end={examenPreguntas.end.toString()} />;
   }
 
   return (
@@ -163,7 +272,9 @@ function Examen({ slug }: { slug: string }) {
               isDone={examenPreguntas.is_done}
             />
           </div>
-          {examenPreguntas.is_done && <FinishedQuiz examen={examenPreguntas.id} />}
+          {examenPreguntas.is_done && (
+            <FinishedQuiz examen={examenPreguntas.id} />
+          )}
           {!userToken?.is_student && (
             <>
               <PreguntasList />

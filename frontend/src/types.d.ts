@@ -111,16 +111,12 @@ export interface QuestionAnswers {
 }
 
 export interface AlumnoQuiz {
-  id: number;
-  alumno: number;
-  pregunta: string;
-  puntaje: number;
-  correct_answer: boolean;
-  respuestas: ProtectedRespuestas[];
   alumno_answers: number[];
+  pregunta: number;
 }
 
 export interface FinishQuiz {
   nota: number;
+  preguntas: Pregunta[];
   quiz: AlumnoQuiz[];
 }

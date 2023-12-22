@@ -4,6 +4,7 @@ import { jwtDecode } from "jwt-decode";
 import { type authToken, type UserToken } from "../types";
 import { postLogin, postRefresh } from "../api/auth.api";
 import axios, { AxiosError } from "axios";
+import { useQuizStore } from "./quiz";
 
 interface State {
   tokens?: authToken;
@@ -68,6 +69,8 @@ export const useAuthStore = create<State>()(
         },
 
         logout: () => {
+          const removeAllQuiz = useQuizStore.getState().removeAllQuiz;
+          removeAllQuiz();
           set({ tokens: undefined, userToken: undefined, isAuth: false });
         },
 

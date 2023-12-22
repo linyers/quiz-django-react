@@ -2,8 +2,10 @@ import { faClockRotateLeft } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import moment from "moment";
 import { useEffect, useState } from "react";
+import { useExamenStore } from "../../store/examenes";
 
 function DateExamen({ start, end }: { start: Date; end: Date }) {
+  const getCurrentTime = useExamenStore((state) => state.getCurrentTimeExamen);
   const [today, setToday] = useState(new Date());
 
   useEffect(() => {
@@ -21,10 +23,10 @@ function DateExamen({ start, end }: { start: Date; end: Date }) {
   }
 
   if (today >= new Date(start) && today <= new Date(end)) {
-    const currentDateTime = new Date(end) - today;
+    const currentTime = getCurrentTime(end.toString());
     return (
       <span className="mt-2 text-lg flex items-center text-green-600 font-bold">
-        En curso. Quedan {moment(currentDateTime).format("HH:mm:ss")}{" "}
+        En curso. Quedan {currentTime}{" "}
         <FontAwesomeIcon className="text-4xl" icon={faClockRotateLeft} />
       </span>
     );

@@ -90,7 +90,7 @@ export const useQuizStore = create<State>()(
 
           try {
             await postQuiz(accessToken, questionAnswers);
-            removeAllQuiz()
+            removeAllQuiz();
           } catch (error) {
             console.log(error);
           }
@@ -99,9 +99,9 @@ export const useQuizStore = create<State>()(
         fetchFinishedQuiz: async (accessToken: string, examen: number) => {
           try {
             const res = await getQuizAlumno(accessToken, examen);
-            set({ finishedQuizAlumno: res.data })
+            set({ finishedQuizAlumno: res.data });
           } catch (err) {
-            console.log(err)
+            console.log(err);
           }
         },
 
@@ -124,8 +124,14 @@ export const useQuizStore = create<State>()(
         },
 
         removeAllQuiz: () => {
-          set({ questions: [], questionAnswers: [], quizStart: 0 });
-        }
+          set({
+            questions: [],
+            questionAnswers: [],
+            quizStart: 0,
+            currentQuestion: 0,
+            finishedQuizAlumno: undefined,
+          });
+        },
       };
     },
     {

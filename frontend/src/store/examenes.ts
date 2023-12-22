@@ -27,6 +27,7 @@ interface State {
   ) => Promise<boolean>;
   removeExamen: (accessToken: string, slug: string) => Promise<boolean>;
   setExamenUpdate: (examen: Examen) => void;
+  getCurrentTimeExamen: (end: string) => string;
   cleanErrors: () => void;
   cleanQuery: () => void;
 }
@@ -91,6 +92,14 @@ export const useExamenStore = create<State>((set, get) => {
       } catch (err) {
         return false;
       }
+    },
+
+    getCurrentTimeExamen: (end: string): string => {
+      const endDate = new Date(end);
+      const today = new Date();
+      const difference = endDate.getTime() - today.getTime();
+      const currentDateTime = new Date(difference).toISOString().slice(11, 19);
+      return currentDateTime;
     },
 
     setExamenUpdate: (examen: Examen) => {
