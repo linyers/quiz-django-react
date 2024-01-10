@@ -30,7 +30,7 @@ const FinishedQuizAnswers = ({
 
   if (alumnoAnswers) {
     isCorrect = respuestasCorrectas.every((respuesta) =>
-      alumnoAnswers.includes(respuesta.id)
+      alumnoAnswers.includes(respuesta.id),
     );
   }
 
@@ -120,7 +120,7 @@ const FinishedQuiz = ({ examen }: { examen: number }) => {
           <ul className="flex flex-col gap-5">
             {finishedQuizAlumno?.preguntas.map((pregunta, idx) => {
               const alumnoQuiz = finishedQuizAlumno?.quiz.find(
-                (q) => q.pregunta === pregunta.id
+                (q) => q.pregunta === pregunta.id,
               );
               return (
                 <li className="flex flex-col">
@@ -181,7 +181,7 @@ const StartButton = ({
 
 function Examen({ slug }: { slug: string }) {
   const requestExamenPreguntas = useExamenStore(
-    (state) => state.requestExamenPreguntas
+    (state) => state.requestExamenPreguntas,
   );
   const examenPreguntas = useExamenStore((state) => state.examenPreguntas);
   const tokens = useAuthStore((state) => state.tokens);
@@ -265,12 +265,14 @@ function Examen({ slug }: { slug: string }) {
                 <span>{moment(examenPreguntas.end).format("LL HH:mm")}</span>
               </p>
             </div>
-            <StartButton
-              start={examenPreguntas.start}
-              end={examenPreguntas.end}
-              examenId={examenPreguntas.id}
-              isDone={examenPreguntas.is_done}
-            />
+            {userToken?.is_student && (
+              <StartButton
+                start={examenPreguntas.start}
+                end={examenPreguntas.end}
+                examenId={examenPreguntas.id}
+                isDone={examenPreguntas.is_done}
+              />
+            )}
           </div>
           {examenPreguntas.is_done && (
             <FinishedQuiz examen={examenPreguntas.id} />
